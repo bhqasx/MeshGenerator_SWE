@@ -1,13 +1,14 @@
-function [p,t]=MeshGenerate
-%use the  program Mesh2d_v24 by Darren Engwirda to generate a triangle mesh
-%and write the mesh into a text file
-
+function DomainDivision
+%elevation interpolation
+%step1: extract polygons from a SMS map file.  
+clear;
 [nodes,arcs,polygons]=read_sms_map;
 
 nd=nodes(:,2:3);
 nplg=size(polygons,2);
-cnect=[];
 
+b=cell(1,nplg);
+p=struct('Vertices',b,'Faces',b,'FaceColor',b);       %creat a struct array
 for i=1:1:nplg
     PlgArcs=polygons{i};
     narc_in_plg=size(PlgArcs,1);
@@ -19,6 +20,7 @@ for i=1:1:nplg
         rnd=find(nodes(:,1)==arcs(ind,3));
         c(j,2)=rnd;
     end
+
     %check the connective relationship
     for j=2:1:narc_in_plg
         if (sum(c(j-1,:)==c(j,1))==0)&&(sum(c(j-1,:)==c(j,2))==0)
@@ -32,8 +34,21 @@ for i=1:1:nplg
         end
     end
     
-    cnect=[cnect,c];
+    p(i).Vertices=nd;
+    p(i).Faces=[c(1,:),(c(2:end,2)).'];
+    p(i).FaceColor='none';
+    switch mod(i,4)
+        case 0
+            p(i).EdgeColor='black';
+        case 1
+            p(i).EdgeColor='blue';
+        case 2
+            p(i).EdgeColor='red';
+        case 3
+            p(i).EdgeColor='green';
+    end
+    p(i).ButtonDownFcn={@PolygonClickCallback,i};    %set the callback function and its input parameter
+    patch(p(i));
 end
 
-hdata.hmax=100;    %limit the cell size
-[p,t] = mesh2d(nd,cnect,hdata);
+save('p_domain','p');

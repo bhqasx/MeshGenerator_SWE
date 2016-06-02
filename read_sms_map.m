@@ -60,6 +60,4 @@ while ~feof(file_id)
 end
 
 
-
-
 fclose(file_id); 
