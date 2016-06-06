@@ -28,6 +28,8 @@ for i=1:1:nplg
                 c(j-1,:)=fliplr(c(j-1,:));
             elseif c(j-1,1)==c(j,2)
                 c(j-1:j,:)=fliplr(c(j-1:j,:));
+            elseif c(j-1,2)==c(j,2)
+                c(j,:)=fliplr(c(j,:));
             end
         end
     end
