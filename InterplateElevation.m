@@ -56,7 +56,7 @@ for i=1:1:nplg
             aa=inputdlg({'input two or four cs numbers for this polygon'}...
                 ,'user input', 1, {''}, options);
             rt=textscan(aa{1},'%f','Delimiter',',');
-            p(i).node_on_cs=rt{1};
+            p(i).node_on_cs=reshape(rt{1},2,size(rt{1},1)/2);
             set(ptemp,'FaceColor','none');
         else
             p(i).node_on_cs=find(tt);
@@ -64,7 +64,7 @@ for i=1:1:nplg
     end 
     
     %find the intersection point of two breaklines
-    if size(p(i).node_on_cs,1)==2
+    if size(p(i).node_on_cs,2)==1
         mc=[];      %coefficient matrix of intersection point eqs.
         vb=[];
         bl=[];     %xy of two points on a breakline
@@ -78,8 +78,8 @@ for i=1:1:nplg
             p2cs=isoncs(px2,py2,p(i).node_on_cs);
             
             if p1cs*p2cs==0
-                set_breakline_user(i);
-                j=npt_in_1p;   %exit for loop
+                [mc,vb]=set_breakline_user(p(i));
+                break;
             elseif p1cs~=p2cs
                 mc=[mc;(py2-py1)/(px2-px1),-1];
                 vb=[vb;(py2-py1)/(px2-px1)*px1-py1];
@@ -93,8 +93,15 @@ for i=1:1:nplg
 %         line([bl(1,1),bl(1,3)],[bl(1,2),bl(1,4)]);
 %         line([bl(2,1),bl(2,3)],[bl(2,2),bl(2,4)]);
 %         plot(p(i).intp_xy(1),p(i).intp_xy(2),'ro');
+    elseif size(p(i).node_on_cs,2)==2
+        %there are four cs used to interplate elevation in this polygon
+        [mc,vb]=set_breakline_user(p(i),p(i).node_on_cs(:,1));
+        p(i).intp_xy=mc\vb;
+        
+        [mc,vb]=set_breakline_user(p(i),p(i).node_on_cs(:,2));
+        p(i).intp_xy=[p(i).intp_xy,mc\vb];
     else
-        set_breakline_user(i);
+        button=questdlg('unexpected number of cross-sections');
     end
 end
 
@@ -114,14 +121,6 @@ end
         end
     end
     
-    function set_breakline_user(ipp)
-        for kk=1:1:size(p(ipp).Faces,2)
-            tx=p(ipp).Vertices(p(ipp).Faces(kk),1);
-            ty=p(ipp).Vertices(p(ipp).Faces(kk),2);
-            text(tx,ty,['\it',num2str(p(ipp).Faces(kk))]);
-        end
-        usert=inputdlg(
-    end
 
     function ot=isoncs(xx,yy,cs_e)
         ot=0;
@@ -142,5 +141,46 @@ end
             end
         end
     end
+
+end
+
+
+function [mc,vb]=set_breakline_user(p,ccss)
+%set the breakline for a polygon region manually
+
+mc=[];      %coefficient matrix of intersection point eqs.
+vb=[];
+bl=[];     %xy of two points on a breakline
+for kk=1:1:size(p.Faces,2)
+    tx=p.Vertices(p.Faces(kk),1);
+    ty=p.Vertices(p.Faces(kk),2);
+    text(tx,ty,['\it',num2str(p.Faces(kk))]);
+end
+
+if nargin==2
+    dlgstr=['input end points indexes of a breakline for CS ', num2str(ccss(1)), ' and CS ', num2str(ccss(2))];
+else
+    dlgstr=['input end points indexes of a breakline'];
+end
+for kk=1:1:2
+    op2.WindowStyle='normal';
+    usert=inputdlg({dlgstr},'user input', 1, {''}, op2);
+    
+    rt=textscan(usert{1},'%f','Delimiter',',');      %use comma to seperate
+    bl_u=rt{1};
+    if size(bl_u,1)~=2
+        button=questdlg('invalid input');
+    else
+        px1=p.Vertices(bl_u(1),1);
+        py1=p.Vertices(bl_u(1),2);
+        
+        px2=p.Vertices(bl_u(2),1);
+        py2=p.Vertices(bl_u(2),2);
+        
+        mc=[mc;(py2-py1)/(px2-px1),-1];
+        vb=[vb;(py2-py1)/(px2-px1)*px1-py1];
+        bl=[bl;px1,py1,px2,py2];
+    end
+end
 
 end
