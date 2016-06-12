@@ -126,14 +126,23 @@ for i=1:1:size(gp.p,1)
         hp=plot(gp.p(i,1),gp.p(i,2),'ro');
         [in,on]=inpolygon(gp.p(i,1),gp.p(i,2),vxy(j).xv,vxy(j).yv);
         if in==1
-            if on==1
-                %grid point is on an edge of a polygon
-                if size(p(i).node_on_cs,2)==1
-                    
-                else
-                    
-                end
-            else
+            for k=1:1:size(p(j).node_on_cs,2)
+                %get intersection point on the first CS
+                mc=[];
+                vb=[];
+                px1=p(j).intp_xy(k,1);
+                py1=p(j).intp_xy(k,2);
+                px2=gp.p(i,1);
+                py2=gp.p(i,2);
+                mc=[mc;py2-py1,px1-px2];
+                vb=[vb;py1*(px2-px1)-px1*(py2-py1)];
+                
+                px1=cs_xyz(p(j).node_on_cs(1,k)).xyz(1,1);
+                py1=cs_xyz(p(j).node_on_cs(1,k)).xyz(1,2);
+                px2=cs_xyz(p(j).node_on_cs(1,k)).xyz(end,1);
+                py2=cs_xyz(p(j).node_on_cs(1,k)).xyz(end,2);
+                mc=[mc;py2-py1,px1-px2];
+                vb=[vb;py1*(px2-px1)-px1*(py2-py1)];
                 
             end
         else
@@ -170,7 +179,7 @@ end
             if abs(polyval(coef_l,yy)-xx)<0.1
                 ot=cs_e(kk);
             end
-        end
+        end        
     end
 
 end
