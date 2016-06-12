@@ -16,6 +16,7 @@ for i=1:1:size(p,2)
         case 3
             p(i).EdgeColor='green';
     end
+    p(i).ButtonDownFcn={@PolygonClickCallback};
     patch(p(i));
 end
 DrawCsNumber;
@@ -29,10 +30,14 @@ for i=1:1:nplg
         pts=pts(1:end-1);
     end
     npt_in_1p=size(pts,2);
+    vxy(i).xv=zeros(npt_in_1p,1);
+    vxy(i).yv=zeros(npt_in_1p,1);
     %check if the vertices in the polygon are on measured cross-sections
     for j=1:1:npt_in_1p
         px=p(i).Vertices(pts(j),1);
         py=p(i).Vertices(pts(j),2);
+        vxy(i).xv(j)=px;
+        vxy(i).yv(j)=py;
         for k=1:1:ncs
             if abs(px-cs_xyz(k).xyz(1,1))<1e-02&&abs(py-cs_xyz(k).xyz(1,2))<1e-02
                 p(i).node_on_cs(k)=p(i).node_on_cs(k)+1;
@@ -106,9 +111,35 @@ for i=1:1:nplg
 end
 
 %-----------------------------interpolation------------------------------
-for i=1:1:size(gp,1)
+if nargin==0
+    button=questdlg('Choose a grid file','Guide','Yes');
+    if ~strcmp(button,'Yes')
+        return;
+    end
+    filename=uigetfile;
+    gp=load(filename);
+end
+
+hold on;
+for i=1:1:size(gp.p,1)
     for j=1:1:nplg
-        
+        hp=plot(gp.p(i,1),gp.p(i,2),'ro');
+        [in,on]=inpolygon(gp.p(i,1),gp.p(i,2),vxy(j).xv,vxy(j).yv);
+        if in==1
+            if on==1
+                %grid point is on an edge of a polygon
+                if size(p(i).node_on_cs,2)==1
+                    
+                else
+                    
+                end
+            else
+                
+            end
+        else
+            
+        end
+        delete(hp);
     end
 end
 

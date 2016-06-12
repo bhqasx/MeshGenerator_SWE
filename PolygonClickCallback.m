@@ -2,15 +2,31 @@ function PolygonClickCallback(pobj,evt,iplg)
 %callback function executed when a polygon is clicked
 
 
-set(pobj,'LineWidth',2);
-nd=get(pobj,'Vertices');
-Faces=get(pobj,'Faces');
-for i=1:1:size(Faces,2)
-    x=nd(Faces(1,i),1);
-    y=nd(Faces(1,i),2);
-    text(x,y,num2str(Faces(1,i)));
+persistent ncall;
+if isempty(ncall)
+    set(pobj,'LineWidth',2);
+    nd=get(pobj,'Vertices');
+    Faces=get(pobj,'Faces');
+    sz=size(Faces,2);
+    x=zeros(1,sz);
+    y=zeros(1,sz);
+    for i=1:1:size(Faces,2)
+        x(i)=nd(Faces(1,i),1);
+        y(i)=nd(Faces(1,i),2);
+        tstr(1,i)={['\it',num2str(Faces(1,i))]};
+    end
+    ht=text(x,y,tstr);
+    set(pobj,'UserData',ht);
+    ncall=1;
+else
+    ht=get(pobj,'UserData');
+    delete(ht);
+    ncall=[];
 end
 
+if nargin==2
+    return;
+end
 load('p_domain','p');
 p(iplg)=[];
 
