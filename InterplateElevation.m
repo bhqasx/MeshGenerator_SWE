@@ -1,9 +1,21 @@
-function InterplateElevation(gp)
+function gp=InterplateElevation(p_coordi,tri)
 
 
 clear;
 cs_xyz=read_elevation;
 ncs=size(cs_xyz,2);
+%rebulid distance-elevation data
+b=cell(1,ncs);
+cs_dz=struct('dist',b,'z',b);       %creat a struct array
+for i=1:1:ncs
+    cs_dz(i).dist=zeros(cs_xyz(i).npt,1);
+    cs_dz(i).z=zeros(cs_xyz(i).npt,1);
+    for j=1:1:cs_xyz(i).npt
+        cs_dz(i).dist(j)=((cs_xyz(i).xyz(j,1)-cs_xyz(i).xyz(1,1))^2+(cs_xyz(i).xyz(j,2)-cs_xyz(i).xyz(1,2))^2)^0.5;
+        cs_dz(i).z(j)=cs_xyz(i).xyz(j,3);    
+    end
+end
+
 load('p_domain','p');
 for i=1:1:size(p,2)
     switch mod(i,4)
@@ -86,8 +98,8 @@ for i=1:1:nplg
                 [mc,vb]=set_breakline_user(p(i));
                 break;
             elseif p1cs~=p2cs
-                mc=[mc;(py2-py1)/(px2-px1),-1];
-                vb=[vb;(py2-py1)/(px2-px1)*px1-py1];
+                mc=[mc;py2-py1,px1-px2];
+                vb=[vb;-py1*(px2-px1)+px1*(py2-py1)];
                 bl=[bl;px1,py1,px2,py2];
             end
         end
@@ -118,38 +130,79 @@ if nargin==0
     end
     filename=uigetfile;
     gp=load(filename);
+else
+    gp.p=p_coordi;
+    gp.t=tri;
 end
+gp.p=[gp.p,zeros(size(gp.p,1),1)];
 
 hold on;
 for i=1:1:size(gp.p,1)
+    p_ref=[];
+    hp=plot(gp.p(i,1),gp.p(i,2),'ro');
     for j=1:1:nplg
-        hp=plot(gp.p(i,1),gp.p(i,2),'ro');
         [in,on]=inpolygon(gp.p(i,1),gp.p(i,2),vxy(j).xv,vxy(j).yv);
         if in==1
             for k=1:1:size(p(j).node_on_cs,2)
                 %get intersection point on the first CS
                 mc=[];
                 vb=[];
-                px1=p(j).intp_xy(k,1);
-                py1=p(j).intp_xy(k,2);
+
+                px1=p(j).intp_xy(1,k);
+                py1=p(j).intp_xy(2,k);
                 px2=gp.p(i,1);
                 py2=gp.p(i,2);
                 mc=[mc;py2-py1,px1-px2];
-                vb=[vb;py1*(px2-px1)-px1*(py2-py1)];
+                vb=[vb;-py1*(px2-px1)+px1*(py2-py1)];
                 
                 px1=cs_xyz(p(j).node_on_cs(1,k)).xyz(1,1);
                 py1=cs_xyz(p(j).node_on_cs(1,k)).xyz(1,2);
                 px2=cs_xyz(p(j).node_on_cs(1,k)).xyz(end,1);
                 py2=cs_xyz(p(j).node_on_cs(1,k)).xyz(end,2);
                 mc=[mc;py2-py1,px1-px2];
-                vb=[vb;py1*(px2-px1)-px1*(py2-py1)];
+                vb=[vb;-py1*(px2-px1)+px1*(py2-py1)];
                 
+                refxy=(mc\vb).';
+                pdis=((refxy(1)-px1)^2+(refxy(2)-py1)^2)^0.5;
+                refz=interp_lat(cs_dz(p(j).node_on_cs(1,k)),pdis);
+                p_ref=[p_ref;refxy,refz];
+                %get intersection point on the second CS
+                px1=cs_xyz(p(j).node_on_cs(2,k)).xyz(1,1);
+                py1=cs_xyz(p(j).node_on_cs(2,k)).xyz(1,2);
+                px2=cs_xyz(p(j).node_on_cs(2,k)).xyz(end,1);
+                py2=cs_xyz(p(j).node_on_cs(2,k)).xyz(end,2);
+                mc(2,:)=[py2-py1,px1-px2];
+                vb(2,:)=[-py1*(px2-px1)+px1*(py2-py1)];
+                
+                refxy=(mc\vb).';
+                pdis=((refxy(1)-px1)^2+(refxy(2)-py1)^2)^0.5;
+                refz=interp_lat(cs_dz(p(j).node_on_cs(2,k)),pdis);
+                p_ref=[p_ref;refxy,refz];
             end
-        else
-            
+            break;
         end
-        delete(hp);
     end
+    
+    if isempty(p_ref)
+        button=questdlg('a grid point is not in any polygon');
+    else
+        %longitudinal interpolation
+        nref=size(p_ref,1);
+        wei=zeros(1,nref);
+        for k=1:1:nref
+            ddd=((gp.p(i,1)-p_ref(k,1))^2+(gp.p(i,2)-p_ref(k,2))^2)^0.5;
+            if ddd==0
+                wei(1,:)=0;
+                wei(k)=1;
+                break;
+            end
+            wei(k)=1/ddd;
+        end
+        s_wei=sum(wei);
+        wei=wei/s_wei;
+        gp.p(i,3)=wei*p_ref(:,3);
+    end
+    delete(hp);
 end
 
 %---------------------------------nested function-----------------------
@@ -217,10 +270,33 @@ for kk=1:1:2
         px2=p.Vertices(bl_u(2),1);
         py2=p.Vertices(bl_u(2),2);
         
-        mc=[mc;(py2-py1)/(px2-px1),-1];
-        vb=[vb;(py2-py1)/(px2-px1)*px1-py1];
+        mc=[mc;py2-py1,px1-px2];
+        vb=[vb;-py1*(px2-px1)+px1*(py2-py1)];
         bl=[bl;px1,py1,px2,py2];
     end
 end
 
+end
+
+
+function refz=interp_lat(cs_d_z,pdis)
+%lateral interpolation
+
+refz={};
+npt=size(cs_d_z.dist,1);
+for i=1:1:npt-1
+    if (pdis>=cs_d_z.dist(i))&&(pdis<=cs_d_z.dist(i+1))
+        d1=pdis-cs_d_z.dist(i);
+        d12=cs_d_z.dist(i+1)-cs_d_z.dist(i);
+        refz=(1-d1/d12)*cs_d_z.z(i)+d1/d12*cs_d_z.z(i+1);
+        return;
+    end
+end
+
+if pdis-cs_d_z.dist(npt)<0.1
+    refz=cs_d_z.z(npt);
+end
+if isempty(refz)
+    button=questdlg('requested point is not on the CS');
+end
 end
