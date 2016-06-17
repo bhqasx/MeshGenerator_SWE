@@ -3,7 +3,7 @@ function PolygonClickCallback(pobj,evt,iplg)
 
 
 persistent ncall;
-if isempty(ncall)
+if isempty(ncall)||(nargin==3)
     set(pobj,'LineWidth',2);
     nd=get(pobj,'Vertices');
     Faces=get(pobj,'Faces');
@@ -36,6 +36,9 @@ aa=inputdlg({'input the indexes of the points to redraw a polygon. press Cancel 
 while ~isempty(aa)
     rt=textscan(aa{1},'%f','Delimiter',',');      %use comma to seperate point indexes
     ndl=rt{1};
+    if size(unique(ndl),1)==size(ndl,1)
+        ndl=[ndl;ndl(1)];
+    end
     
     %create a new patch
     clear newp;
@@ -48,8 +51,7 @@ while ~isempty(aa)
     newp.FaceColor='none';
     newp.EdgeColor=[0,0,0];
     newp.ButtonDownFcn='';
-    p(size(p,2)+1)=newp;
-    
+    p(size(p,2)+1)=newp;   
     
     options.WindowStyle='normal';
     aa=inputdlg({'input the indexes of the points to redraw a polygon. press Cancel if there is no need to redraw'}...
@@ -58,6 +60,7 @@ end
 
 close gcf;
 for i=1:1:size(p,2)
+    p(i).ButtonDownFcn={@PolygonClickCallback,i};
     switch mod(i,4)
         case 0
             p(i).EdgeColor='black';

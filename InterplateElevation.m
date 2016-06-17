@@ -95,7 +95,7 @@ for i=1:1:nplg
             p2cs=isoncs(px2,py2,p(i).node_on_cs);
             
             if p1cs*p2cs==0
-                [mc,vb]=set_breakline_user(p(i));
+                [mc,vb]=set_breakline_user(p(i),p(i).node_on_cs(:,1));
                 break;
             elseif p1cs~=p2cs
                 mc=[mc;py2-py1,px1-px2];
@@ -162,6 +162,9 @@ for i=1:1:size(gp.p,1)
                 mc=[mc;py2-py1,px1-px2];
                 vb=[vb;-py1*(px2-px1)+px1*(py2-py1)];
                 
+                if mc(1,:)==[0,0]
+                    break;
+                end
                 refxy=(mc\vb).';
                 pdis=((refxy(1)-px1)^2+(refxy(2)-py1)^2)^0.5;
                 refz=interp_lat(cs_dz(p(j).node_on_cs(1,k)),pdis);
@@ -184,7 +187,17 @@ for i=1:1:size(gp.p,1)
     end
     
     if isempty(p_ref)
-        button=questdlg('a grid point is not in any polygon');
+        dlgstr='a grid point is not in any polygon, you can in put its z coordinate manually:';
+        op2.WindowStyle='normal';
+        usert=inputdlg({dlgstr},'user input', 1, {''}, op2);
+        if ~isempty(usert)
+            try
+                rt=textscan(usert{1},'%f');
+                gp.p(i,3)=rt{1};
+            catch err
+                
+            end
+        end
     else
         %longitudinal interpolation
         nref=size(p_ref,1);
@@ -204,6 +217,8 @@ for i=1:1:size(gp.p,1)
     end
     delete(hp);
 end
+%draw mesh in 3D view
+%trisurf(gp.t,gp.p(:,1),gp.p(:,2),gp.p(:,3));
 
 %---------------------------------nested function-----------------------
     function DrawCsNumber
