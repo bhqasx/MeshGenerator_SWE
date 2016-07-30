@@ -50,8 +50,8 @@ while 1
         end
     end
     
-    p(i,:)=[];
-    zb(i,:)=[];
+    p(idx,:)=[];
+    zb(idx,:)=[];
     
     for i=1:1:ntri
         if any(t(i,:)==idx)==0
@@ -63,11 +63,35 @@ while 1
             t2=[t2; t(i,:)];
         end
     end
-    
+      
     t=t2;
     trisurf(t,p(:,1),p(:,2),-zb);
     view([0,90]);
 end
+
+%-------delete unused nodes--------
+nnod=size(p,1);     %node number
+ntri=size(t,1);          %number of triangles
+aug_p=[1:nnod].';
+aug_p=[aug_p,p,zb];
+aug_pnew=[];
+for i=1:1:nnod
+    if any(any(t==aug_p(i,1)))==1
+        aug_pnew=[aug_pnew; aug_p(i,:)];
+    end
+end
+p=aug_pnew(:,2:3);
+zb=aug_pnew(:,4);
+
+for i=1:1:ntri
+    for j=1:1:3
+        id_new=find(aug_pnew(:,1)==t(i,j));
+        t(i,j)=id_new;
+    end
+end
+
+trisurf(t,p(:,1),p(:,2),-zb);
+view([0,90]);
 
 %---------------------------------------------------------
 function [p,t,zb]=EditZvalue(p,t,zb)
