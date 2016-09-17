@@ -1,8 +1,9 @@
-function [p,t,zb]=EditMesh(p,t,zb)
+function [p,t,zb]=EditMesh(p,t,zb,region)
 
 
 str={'Remove a Node',...
-        'Edit elevation'};
+        'Edit elevation',...
+        'Smooth zb'};
 [optype,ok]=listdlg('PromptString','Select an operation:','SelectionMode','single','ListString',str);
 
 if optype==1
@@ -13,7 +14,11 @@ if optype==2
     [p,t,zb]=EditZvalue(p,t,zb);
 end
 
-
+if optype==3
+    %region can be input as [], if users need to set it by picking points
+    %with mouse.
+    [p,t,zb]=SmoothZb(p,t,zb,region);
+end
 %---------------------------------------------------------
 function [p,t,zb]=RemoveNode(p,t,zb)
 %remove a node and rebuild the mesh
@@ -27,7 +32,7 @@ view([0,90]);
 while 1
     dcm_obj = datacursormode(hfig);
     dcm_obj.removeAllDataCursors();
-    set(dcm_obj,'DisplayStyle','datatip',...
+    set(dcm_obj,'DisplayStyle','window',...
         'SnapToDataVertex','on','Enable','on');
     
     button=questdlg('Pick a node and press Return. One node at a time!');
@@ -98,7 +103,7 @@ function [p,t,zb]=EditZvalue(p,t,zb)
 %modify z value of a node
 
 hfig=figure;
-trisurf(t,p(:,1),p(:,2),-zb);
+trisurf(t,p(:,1),p(:,2),zb);
 %shading('interp');
 view([0,90]);
 
@@ -129,8 +134,71 @@ while 1
     zz=inputdlg('input a new z value:');
     zb(idx)=str2num(zz{1});
     
-    trisurf(t,p(:,1),p(:,2),-zb);
+    trisurf(t,p(:,1),p(:,2),zb);
     %shading('interp');
     view([0,90]);
 end
+
+%---------------------------------------------------------
+function [p,t,zb2]=SmoothZb(p,t,zb1,region)
+%for any points in region, use the mean zb of their surrounding points
+%to substitute the original zb.
+%region is an N*2 array defining a polygon 
+
+if isempty(region)
+    hfig=figure;
+    trisurf(t,p(:,1),p(:,2),-zb1);
+    %shading('interp');
+    view([0,90]);
+    
+    button='Yes';
+    dcm_obj = datacursormode(hfig);
+    dcm_obj.removeAllDataCursors();
+    set(dcm_obj,'DisplayStyle','datatip',...
+        'SnapToDataVertex','on','Enable','on');
+    
+    button=questdlg('Click on four points to define the interplation region, then press Return.');
+    if ~strcmp(button,'Yes')
+        zb2=zb1;
+        return;
+    end
+    % Wait while the user does this.
+    pause;
+    
+    %hold Alt to pick mutiple points
+    region=zeros(4,2);
+    c_info = getCursorInfo(dcm_obj);
+    region(1,:)=c_info(4).Position(1:2);
+    region(2,:)=c_info(3).Position(1:2);
+    region(3,:)=c_info(2).Position(1:2);
+    region(4,:)=c_info(1).Position(1:2);
+end
+
+in = inpoly(p,region);
+nnod=size(p,1);
+zb2=zb1;
+
+k=6;     %number of nearest points for calculating mean zb
+wt=zeros(1,k);      %weight of each points
+for i=1:1:nnod
+    if in(i)==1
+        [idx,d]=knnsearch(p,p(i,1:2),'K',k);   
+        
+        %use distance as weight
+%         for j=1:1:k
+%             if d(j)==0
+%                 wt(j)=0
+%             end
+%             wt(j)=1/d(j)
+%         end
+        
+        %arithmatic average
+        wt=ones(1,k);
+        
+        zb2(i)=wt*zb1(idx)/sum(wt);        
+    end
+end
+
+trisurf(t,p(:,1),p(:,2),-zb2);
+view([0,90]);
     

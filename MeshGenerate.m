@@ -1,7 +1,26 @@
-function [p,t]=MeshGenerate
+function [p,t]=MeshGenerate(outline_src,hmax)
 %use the  program Mesh2d_v24 by Darren Engwirda to generate a triangle mesh
 %and write the mesh into a text file
 
+if outline_src==1
+    [nd,cnect]=outline_sms;       %read from sms map file
+elseif outline_src==2
+    [nd,cnect]=outline_cs;          %read from cross-section file
+else
+    disp('invalid input parameter');
+    return;
+end
+
+if nargin==1
+    hdata.hmax=100;    %limit the cell size
+else
+    hdata.hmax=hmax;
+end
+[p,t] = mesh2d(nd,cnect,hdata);
+
+
+%------------------------------------------------------------
+function  [nd,cnect]=outline_sms
 [nodes,arcs,polygons]=read_sms_map;
 
 nd=nodes(:,2:3);
@@ -37,5 +56,20 @@ for i=1:1:nplg
     cnect=[cnect,c];
 end
 
-hdata.hmax=100;    %limit the cell size
-[p,t] = mesh2d(nd,cnect,hdata);
+
+%------------------------------------------------------------
+function [nd,cnect]=outline_cs;
+cs_xyz=read_elevation;
+nd=[];
+ncs=size(cs_xyz,2);
+
+for i=1:1:ncs
+    nd=[nd; cs_xyz(i).xyz(1,1:2)];
+end
+
+for i=ncs:-1:1
+    nd=[nd; cs_xyz(i).xyz(cs_xyz(i).npt, 1:2)];
+end
+
+nnd=size(nd,1);
+cnect=[(1:nnd).',[(2:nnd).';1]];

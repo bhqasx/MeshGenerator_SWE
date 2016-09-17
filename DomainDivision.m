@@ -1,7 +1,25 @@
-function DomainDivision
+function DomainDivision(outline_src,p)
 %elevation interpolation
 %step1: extract polygons from a SMS map file.  
-clear;
+
+if outline_src==1
+    p=extract_sms_domain;      %extract domains from a sms map file
+elseif outline_src==2
+    if nargin==1
+        p=divide_domain;              %specify domains by mouse from 3D cross-section lines
+    else 
+        p=divide_domain(p);         %edit a domain division
+    end
+else
+    disp('invalid input parameter');
+    return;
+end
+    
+save('p_domain','p');
+
+
+%--------------------------------------------------------------
+function p=extract_sms_domain
 [nodes,arcs,polygons]=read_sms_map;
 
 nd=nodes(:,2:3);
@@ -53,4 +71,57 @@ for i=1:1:nplg
     patch(p(i));
 end
 
-save('p_domain','p');
+
+%--------------------------------------------------------------
+function p=divide_domain(p);
+cs_xyz=read_elevation;
+hfig=figure;
+ncs=size(cs_xyz,2);
+for i=1:1:ncs
+     plot3(cs_xyz(i).xyz(:,1),cs_xyz(i).xyz(:,2),cs_xyz(i).xyz(:,3),'b-d');
+     hold on;
+end
+view([0,90]);
+
+if nargin==0
+    ndm=0;
+else
+    ndm=size(p,2);
+    for i=1:1:ndm
+        patch(p(i));
+    end
+end
+
+nd=zeros(4,3);
+button='Yes';
+while 1==1   
+    button=questdlg('Click on four points to define a interplation region, then press Return.');
+    if ~strcmp(button,'Yes')
+        return;
+    end
+    
+    ndm=ndm+1;
+    
+    dcm_obj = datacursormode(hfig);
+    dcm_obj.removeAllDataCursors();
+    set(dcm_obj,'DisplayStyle','datatip',...
+        'SnapToDataVertex','on','Enable','on');
+    
+    % Wait while the user does this.
+    pause;
+    
+    %hold Alt to pick mutiple points
+    c_info = getCursorInfo(dcm_obj);
+    nd(1,:)=c_info(4).Position;
+    nd(2,:)=c_info(3).Position;
+    nd(3,:)=c_info(2).Position;
+    nd(4,:)=c_info(1).Position;
+    
+    p(ndm).Vertices=nd;
+    p(ndm).Faces=[1,2,3,4,1];
+    p(ndm).FaceColor='none';
+    p(ndm).EdgeColor='red';
+    
+    p(ndm).ButtonDownFcn={@PolygonClickCallback,ndm};    %set the callback function and its input parameter
+    patch(p(ndm));
+end

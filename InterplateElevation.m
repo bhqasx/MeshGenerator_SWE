@@ -1,7 +1,6 @@
-function gp=InterplateElevation(p_coordi,tri)
+function gp=InterplateElevation(p_coordi,tri,edit_part)
 
 
-clear;
 cs_xyz=read_elevation;
 ncs=size(cs_xyz,2);
 %rebulid distance-elevation data
@@ -17,6 +16,7 @@ for i=1:1:ncs
 end
 
 load('p_domain','p');
+hfig=figure;
 for i=1:1:size(p,2)
     switch mod(i,4)
         case 0
@@ -187,15 +187,17 @@ for i=1:1:size(gp.p,1)
     end
     
     if isempty(p_ref)
-        dlgstr='a grid point is not in any polygon, you can in put its z coordinate manually:';
-        op2.WindowStyle='normal';
-        usert=inputdlg({dlgstr},'user input', 1, {''}, op2);
-        if ~isempty(usert)
-            try
-                rt=textscan(usert{1},'%f');
-                gp.p(i,3)=rt{1};
-            catch err
-                
+        if (nargin==3&&edit_part==0)||(nargin==2)
+            dlgstr='a grid point is not in any polygon, you can in put its z coordinate manually:';
+            op2.WindowStyle='normal';
+            usert=inputdlg({dlgstr},'user input', 1, {''}, op2);
+            if ~isempty(usert)
+                try
+                    rt=textscan(usert{1},'%f');
+                    gp.p(i,3)=rt{1};
+                catch err
+                    
+                end
             end
         end
     else

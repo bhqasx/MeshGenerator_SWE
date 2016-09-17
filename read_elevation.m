@@ -5,8 +5,8 @@ button=questdlg('Choose an elevation file','Guide','Yes');
 if ~strcmp(button,'Yes')
     return;
 end
-filename=uigetfile;
-file_id=fopen(filename);
+[filename,path,FilterIndex]=uigetfile;
+file_id=fopen([path,filename]);
 
 tline=fgetl(file_id);
 tline=fgetl(file_id);

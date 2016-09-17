@@ -1,15 +1,19 @@
-function InteractiveMesh(p,t)
+function InteractiveMesh(p,t,zb)
 %observe a cell in a mesh
 %or find a node index
-if nargin==0
-    clear;
-    filename=uigetfile('','Choose a mesh file');
-    load(filename);
-end
+
 
 hfig=figure;
-patch('faces',t,'vertices',p,'facecolor','none','edgecolor','b');
-axis equal off;
+if nargin==2
+    patch('faces',t,'vertices',p,'facecolor','none','edgecolor','b');
+    axis equal off;
+elseif nargin==3
+    trisurf(t,p(:,1),p(:,2),zb);
+    view([0,90]);
+else
+    disp('invalid number of input parameters');
+    return
+end
 hold on;
 
 str={'Mark a cell',...
@@ -33,7 +37,7 @@ if optype==2
         dcm_obj = datacursormode(hfig);
         dcm_obj.removeAllDataCursors();
         set(dcm_obj,'DisplayStyle','datatip',...
-            'SnapToDataVertex','off','Enable','on');
+            'SnapToDataVertex','on','Enable','on');
         
         button=questdlg('Click line to display a data tip, then press Return.');
         if ~strcmp(button,'Yes')

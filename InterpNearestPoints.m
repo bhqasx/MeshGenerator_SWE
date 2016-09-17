@@ -1,5 +1,5 @@
 function [zb2]=InterpNearestPoints(p1,zb1,p2,k)
-%find k nearst points to each node in p2 from p2 and use 
+%find k nearst points to each node in p2 from p1 and use 
 %their zb values tointerplate
 
 if nargin==3
