@@ -196,7 +196,7 @@ function p = boundarynodes(ph,th,hh,node,edge,output)
 
 p = node;
 e = edge;
-i = tsearch(ph(:,1),ph(:,2),th,p(:,1),p(:,2));               
+i = tsearchn(ph(:,1:2),th,p(:,1:2));               
 h = tinterp(ph,th,hh,p,i);
 
 if output

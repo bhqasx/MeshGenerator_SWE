@@ -2,6 +2,7 @@ function [p,t,zb]=EditMesh(p,t,zb,region)
 
 
 str={'Remove a Node',...
+        'Remove a region',...
         'Edit elevation',...
         'Smooth zb'};
 [optype,ok]=listdlg('PromptString','Select an operation:','SelectionMode','single','ListString',str);
@@ -11,10 +12,14 @@ if optype==1
 end
 
 if optype==2
-    [p,t,zb]=EditZvalue(p,t,zb);
+    [p,t,zb]=RemoveRegion(p,t,zb,region);
 end
 
 if optype==3
+    [p,t,zb]=EditZvalue(p,t,zb);
+end
+
+if optype==4
     %region can be input as [], if users need to set it by picking points
     %with mouse.
     [p,t,zb]=SmoothZb(p,t,zb,region);
@@ -98,7 +103,69 @@ end
 trisurf(t,p(:,1),p(:,2),-zb);
 view([0,90]);
 
-%---------------------------------------------------------
+
+%-------------------------------------------------------------------
+function [p,t,zb]=RemoveRegion(p,t,zb,region)
+
+
+in = inpoly(p,region);
+while sum(in)>0
+    nnod=size(p,1);
+    disp(nnod);
+    ntri=size(t,1);  
+    
+    for i=1:1:nnod
+        if in(i)==1
+            idx=i;
+            break;
+        end
+    end
+    
+    p(idx,:)=[];
+    zb(idx,:)=[];   
+    t2=[];
+    
+    for i=1:1:ntri
+        if any(t(i,:)==idx)==0
+            for j=1:1:3
+                if t(i,j)>idx
+                    t(i,j)=t(i,j)-1;
+                end
+            end
+            t2=[t2; t(i,:)];
+        end
+    end    
+    t=t2;
+    
+    in = inpoly(p,region);
+end
+
+%-------delete unused nodes--------
+nnod=size(p,1);     %node number
+ntri=size(t,1);          %number of triangles
+aug_p=[1:nnod].';
+aug_p=[aug_p,p,zb];
+aug_pnew=[];
+for i=1:1:nnod
+    if any(any(t==aug_p(i,1)))==1
+        aug_pnew=[aug_pnew; aug_p(i,:)];
+    end
+end
+p=aug_pnew(:,2:3);
+zb=aug_pnew(:,4);
+
+for i=1:1:ntri
+    for j=1:1:3
+        id_new=find(aug_pnew(:,1)==t(i,j));
+        t(i,j)=id_new;
+    end
+end
+
+hfig=figure;
+trisurf(t,p(:,1),p(:,2),-zb);
+view([0,90]);
+
+%-------------------------------------------------------------------
 function [p,t,zb]=EditZvalue(p,t,zb)
 %modify z value of a node
 

@@ -83,15 +83,4 @@ function [nd,cnect]=outline_obj
 load([path,filename],'CSold');
 
 nd=[];
-ncs=size(CSold,2);
-
-for i=1:1:ncs
-    nd=[nd; CSold(i).xy(1,1:2)];
-end
-
-for i=ncs:-1:1
-    nd=[nd; CSold(i).xy(CSold(i).nodes, 1:2)];
-end
-
-nnd=size(nd,1);
-cnect=[(1:nnd).',[(2:nnd).';1]];
+ncs=size(cs_xyz,2);

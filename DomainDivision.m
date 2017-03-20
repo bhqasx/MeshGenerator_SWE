@@ -1,21 +1,20 @@
-function DomainDivision(outline_src,p)
+function domn=DomainDivision(outline_src,p)
 %elevation interpolation
 %step1: extract polygons from a SMS map file.  
 
 if outline_src==1
-    p=extract_sms_domain;      %extract domains from a sms map file
+    domn=extract_sms_domain;      %extract domains from a sms map file
 elseif outline_src==2
     if nargin==1
-        p=divide_domain;              %specify domains by mouse from 3D cross-section lines
+        domn=divide_domain;              %specify domains by mouse from 3D cross-section lines
     else 
-        p=divide_domain(p);         %edit a domain division
+        domn=divide_domain(p);         %edit a domain division
     end
 else
     disp('invalid input parameter');
     return;
 end
     
-save('p_domain','p');
 
 
 %--------------------------------------------------------------

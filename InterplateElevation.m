@@ -1,4 +1,5 @@
-function gp=InterplateElevation(p_coordi,tri,edit_part)
+function gp=InterplateElevation(p_coordi,tri,edit_part,p)
+%basic usage: gp=InterplateElevation(p_coordi,tri)
 
 
 cs_xyz=read_elevation;
@@ -15,7 +16,10 @@ for i=1:1:ncs
     end
 end
 
-load('p_domain','p');
+if nargin~=4
+    load('p_domain','p');
+end
+
 hfig=figure;
 for i=1:1:size(p,2)
     switch mod(i,4)
