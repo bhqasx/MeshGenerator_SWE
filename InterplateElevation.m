@@ -1,8 +1,11 @@
-function gp=InterplateElevation(p_coordi,tri,edit_part,p)
+function gp=InterplateElevation(p_coordi,tri,edit_part,p,CS)
 %basic usage: gp=InterplateElevation(p_coordi,tri)
 
-
-cs_xyz=read_elevation;
+if nargin==5
+    cs_xyz=CS;
+else
+    cs_xyz=read_elevation;
+end
 ncs=size(cs_xyz,2);
 %rebulid distance-elevation data
 b=cell(1,ncs);
@@ -16,7 +19,7 @@ for i=1:1:ncs
     end
 end
 
-if nargin~=4
+if nargin<4
     load('p_domain','p');
 end
 

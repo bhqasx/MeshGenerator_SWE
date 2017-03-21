@@ -1,4 +1,4 @@
-function domn=DomainDivision(outline_src,p)
+function domn=DomainDivision(outline_src,varargin)
 %elevation interpolation
 %step1: extract polygons from a SMS map file.  
 
@@ -7,8 +7,18 @@ if outline_src==1
 elseif outline_src==2
     if nargin==1
         domn=divide_domain;              %specify domains by mouse from 3D cross-section lines
-    else 
-        domn=divide_domain(p);         %edit a domain division
+    elseif nargin==2 
+        domn=divide_domain(varargin{1});         %edit a domain division
+    else
+        disp('invalid input parameter');
+        return;
+    end
+elseif outline_src==3
+    if nargin==4
+        domn=auto_divide_domain(varargin{1},varargin{2},varargin{3});
+    else
+        disp('invalid input parameter');
+        return;
     end
 else
     disp('invalid input parameter');
@@ -72,7 +82,7 @@ end
 
 
 %--------------------------------------------------------------
-function p=divide_domain(p);
+function p=divide_domain(p)
 cs_xyz=read_elevation;
 hfig=figure;
 ncs=size(cs_xyz,2);
@@ -123,4 +133,40 @@ while 1==1
     
     p(ndm).ButtonDownFcn={@PolygonClickCallback,ndm};    %set the callback function and its input parameter
     patch(p(ndm));
+end
+
+
+%--------------------------------------------------------------
+function pg=auto_divide_domain(CS,bl1,bl2)
+ncs=size(CS,2);
+for i=1:1:ncs-1
+    %left floodplain domain
+    iptc=3*(i-1)+1;
+    pg(iptc).Vertices=[CS(i).xy(1,:);CS(i+1).xy(1,:);bl1(i+1,:);bl1(i,:)];
+    pg(iptc).Faces=[1,2,3,4,1];
+    
+    %main channel
+    iptc=3*(i-1)+2;
+    pg(iptc).Vertices=[bl1(i,:);bl1(i+1,:);bl2(i+1,:);bl2(i,:)];
+    pg(iptc).Faces=[1,2,3,4,1];
+    
+    iptc=3*i;
+    pg(iptc).Vertices=[bl2(i,:);bl2(i+1,:);CS(i+1).xy(end,:);CS(i).xy(end,:)];
+    pg(iptc).Faces=[1,2,3,4,1];
+end
+
+for i=1:1:size(pg,2)
+    pg(i).FaceColor='none';
+    switch mod(i,4)
+        case 0
+            pg(i).EdgeColor='black';
+        case 1
+            pg(i).EdgeColor='blue';
+        case 2
+            pg(i).EdgeColor='red';
+        case 3
+            pg(i).EdgeColor='green';
+    end
+    pg(i).ButtonDownFcn={@PolygonClickCallback,i};    %set the callback function and its input parameter
+    patch(pg(i));    
 end
