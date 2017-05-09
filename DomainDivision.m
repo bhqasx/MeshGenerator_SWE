@@ -138,6 +138,9 @@ end
 
 %--------------------------------------------------------------
 function pg=auto_divide_domain(CS,bl1,bl2)
+%bl1,bl2 are breaklines. Each each node on a breakline is located at a
+%cross-section
+
 ncs=size(CS,2);
 for i=1:1:ncs-1
     %left floodplain domain

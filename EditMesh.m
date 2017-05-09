@@ -4,7 +4,8 @@ function [p,t,zb]=EditMesh(p,t,zb,region)
 str={'Remove a Node',...
         'Remove a region',...
         'Edit elevation',...
-        'Smooth zb'};
+        'Smooth zb'...
+        'Refine and Interplate Z'};
 [optype,ok]=listdlg('PromptString','Select an operation:','SelectionMode','single','ListString',str);
 
 if optype==1
@@ -24,6 +25,13 @@ if optype==4
     %with mouse.
     [p,t,zb]=SmoothZb(p,t,zb,region);
 end
+
+if optype==5
+    %region can be input as [], if users need to set it by picking points
+    %with mouse.
+    [p,t,zb]=RefineAndInterp(p,t,zb,region);
+end 
+   
 %---------------------------------------------------------
 function [p,t,zb]=RemoveNode(p,t,zb)
 %remove a node and rebuild the mesh
@@ -268,4 +276,44 @@ end
 
 trisurf(t,p(:,1),p(:,2),-zb2);
 view([0,90]);
+
+
+%---------------------------------------------------------
+function [p2,t2,zb2]=RefineAndInterp(p1,t1,zb1,region)
+%refine a region in the mesh and execute elevation interplation for the 
+%added nodes
+
+
+if isempty(region)
+    hfig=figure;
+    trisurf(t1,p1(:,1),p1(:,2),zb1);
+    view([0,90]);
+
+    button='Yes';
+    dcm_obj = datacursormode(hfig);
+    dcm_obj.removeAllDataCursors();
+    set(dcm_obj,'DisplayStyle','datatip',...
+        'SnapToDataVertex','on','Enable','on');
     
+    button=questdlg('Click on four points to define the interplation region, then press Return.');
+    if ~strcmp(button,'Yes')
+        zb2=zb1;
+        return;
+    end
+    % Wait while the user does this.
+    pause;
+    
+    %hold Alt to pick mutiple points
+    region=zeros(4,2);
+    c_info = getCursorInfo(dcm_obj);
+    region(1,:)=c_info(4).Position(1:2);
+    region(2,:)=c_info(3).Position(1:2);
+    region(3,:)=c_info(2).Position(1:2);
+    region(4,:)=c_info(1).Position(1:2);
+end
+
+in = inpoly(p1,region);
+ti = sum(in(t1),2)>0; 
+[p2,t2] = refine(p1,t1,ti);
+[zb2]=InterpNearestPoints(p1,zb1,p2,4);
+

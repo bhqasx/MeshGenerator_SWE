@@ -23,7 +23,7 @@ while 1==1
     dcm_obj = datacursormode(hfig);
     dcm_obj.removeAllDataCursors();
     set(dcm_obj,'DisplayStyle','datatip',...
-        'SnapToDataVertex','off','Enable','on');
+        'SnapToDataVertex','on','Enable','on');
     
     button=questdlg('Click line to display a data tip, then press Return.');
     if ~strcmp(button,'Yes')
