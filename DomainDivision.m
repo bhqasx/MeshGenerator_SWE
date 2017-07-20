@@ -14,8 +14,33 @@ elseif outline_src==2
         return;
     end
 elseif outline_src==3
+    %construct domains with cross-section lines and break lines
     if nargin==4
         domn=auto_divide_domain(varargin{1},varargin{2},varargin{3});
+    elseif nargin==6
+        if strcmp(varargin{4},'BL_by_id') 
+            if varargin{5}==1
+                %use the index of nodes on cross-section lines to represent
+                %the break line
+                CS=varargin{1};
+                id1=varargin{2};
+                id2=varargin{3};
+                ncs=size(CS,2);
+                bl1=zeros(ncs,2);
+                bl2=zeros(ncs,2);
+                
+                for i=1:1:ncs
+                   bl1(i,:)=CS(i).xy(id1(i),:);
+                   bl2(i,:)=CS(i).xy(id2(i),:);
+                end
+                domn=auto_divide_domain(CS,bl1,bl2);
+            else
+                domn=auto_divide_domain(varargin{1},varargin{2},varargin{3});
+            end
+        else
+            disp('unsupported property');
+            return;
+        end
     else
         disp('invalid input parameter');
         return;
