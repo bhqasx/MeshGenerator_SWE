@@ -78,7 +78,7 @@ for i=1:1:nnod
         l2=(d(2)^2-lna^2)^0.5;
         zna=(l2*z1+l1*z2)/(l1+l2);
         
-        %reference point on the first line
+        %reference point on the second line
         [idx,d]=knnsearch(rfnd_b,p(i,1:2),'K',2);
         z1=rfnd_b_z(idx(1));
         z2=rfnd_b_z(idx(2));
