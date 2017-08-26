@@ -43,7 +43,7 @@ for i=1:1:size(p,1)
             vb=[vb;-py1*(px2-px1)+px1*(py2-py1)];
             
             if mc(1,:)==[0,0]
-                disp('锟截合碉拷');
+                disp('重合点');
                 pause;
             end
             
@@ -69,6 +69,7 @@ for i=1:1:size(p,1)
                     break;
                 else
                     wt(jj)=1/d(jj);
+                end
             end
             
             refz=wt*CS(j).zb(idx,:)/sum(wt);
