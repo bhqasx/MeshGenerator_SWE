@@ -1,12 +1,94 @@
-function [ zb ] = confluent_area_topo( CS, pgxy, zc, scale_r, p, t )
-%make sure the six 3d lines in CS form a closed line.
-%cs_order is an array of the indexes of elements in the struct CS, which is
-%arranged in clockwise or counter-clockwise order.
+function [ zb ] = confluent_area_topo( CS,  zc, scale_r, hmax )
+%make sure the three 3d lines in CS form a closed line.
 %zc is z coordinate at the centroid of the confluent area
+
+
+%----------------------------------------------------------
+%connecting 6 end points from 3 CS to construct the boundary of the
+%confluent area
+pgxy.x=zeros(6,1);
+pgxy.y=zeros(6,1);
+pgxy.ics=zeros(6,1);    %the index of CS that a point in pgxy locates on
+pgxy.ipOnCS=zeros(6,1);  %index of the node on its CS     
+
+hfig=figure;
+for kcs=1:1:3
+    plot(CS(kcs).xy([1,end],1),CS(kcs).xy([1,end],2),'b-d');
+    hold on;
+end
+button=questdlg('Connectiong 6 points in a clockwise or counter-clockwise direction to define the boundary, then press Return.');
+if ~strcmp(button,'Yes')
+    return;
+end
+dcm_obj = datacursormode(hfig);
+dcm_obj.removeAllDataCursors();
+set(dcm_obj,'DisplayStyle','datatip',...
+    'SnapToDataVertex','on','Enable','on');
+
+% Wait while the user does this.
+pause;
+
+%hold Alt to pick mutiple points
+c_info = getCursorInfo(dcm_obj);
+for kp=1:1:6
+    pgxy.x(kp)=c_info(7-kp).Position(1);
+    pgxy.y(kp)=c_info(7-kp).Position(2);
+end
+%----------------------------------------------------------
+
+
+%----------------------------------------------------------
+%construct the rest 3 boundary cross-section
+for kp=1:1:6    
+    for kcs=1:1:3
+        if (pgxy.x(kp)-CS(kcs).xy(1,1)==0)&&(pgxy.y(kp)-CS(kcs).xy(1,2)==0)
+            pgxy.ics(kp)=kcs;
+            pgxy.ipOnCS(kp)=1;
+        elseif (pgxy.x(kp)-CS(kcs).xy(end,1)==0)&&(pgxy.y(kp)-CS(kcs).xy(end,2)==0)
+            pgxy.ics(kp)=kcs;
+            pgxy.ipOnCS(kp)=CS(kcs).nodes;
+        end
+    end
+end
+
+kcs=3;
+for kp=1:1:6
+    if kp==6
+        ip1=6;
+        ip2=1;
+    else
+        ip1=kp;
+        ip2=kp+1;
+    end
+    
+    if pgxy.ics(ip1)~=pgxy.ics(ip2)
+        kcs=kcs+1;
+        CS(kcs).nodes=2;
+        CS(kcs).xy=[CS(pgxy.ics(ip1)).xy(pgxy.ipOnCS(ip1),:); CS(pgxy.ics(ip2)).xy(pgxy.ipOnCS(ip2),:)];
+        CS(kcs).zb=[CS(pgxy.ics(ip1)).zb(pgxy.ipOnCS(ip1)); CS(pgxy.ics(ip2)).zb(pgxy.ipOnCS(ip2))];
+    end
+end
+
 if (numel(CS)~=6)
     disp('6 cross-sections (3 from measurements and 3 created by users) is need to execute the function');
     return;
 end
+%----------------------------------------------------------
+
+
+%----------------------------------------------------------
+%generate 2d planar mesh
+nd=[pgxy.x,pgxy.y];
+cnect=[(1:6).',[(2:6).';1]];
+parentpath = cd(cd('..'));      %mesh2d is in the parent folder
+
+addpath(parentpath);
+
+hdata.hmax=hmax;
+[p,t] = mesh2d(nd,cnect,hdata);
+
+rmpath(parentpath);
+%----------------------------------------------------------
 
 zb=zeros(size(p,1),1);
 
