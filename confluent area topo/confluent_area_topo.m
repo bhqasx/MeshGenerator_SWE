@@ -1,4 +1,4 @@
-function [ zb ] = confluent_area_topo( CS,  zc, scale_r, hmax )
+function [ p,t,zb,pgxy,x_shape,y_shape ] = confluent_area_topo( CS,  zc, scale_r, hmax )
 %make sure the three 3d lines in CS form a closed line.
 %zc is z coordinate at the centroid of the confluent area
 
@@ -93,6 +93,13 @@ rmpath(parentpath);
 zb=zeros(size(p,1),1);
 
 [xc,yc]=get_centroid(pgxy.x, pgxy.y);
+%calculate shape parameters of the polygon
+x_shape=0;
+y_shape=0;
+for i=1:1:3
+    x_shape=x_shape+abs(xc-0.5*(CS(i).xy(1,1)+CS(i).xy(end,1)));
+    y_shape=y_shape+abs(yc-0.5*(CS(i).xy(1,2)+CS(i).xy(end,2)));
+end
 
 %define the inner polygon in which every node has the constant elevation zc
 pg_inner_xy.x=xc+scale_r*(pgxy.x-xc);
@@ -123,7 +130,14 @@ trisurf(t,p(:,1),p(:,2),zb);
             end
             [in,on]=inpolygon(p(i,1), p(i,2), [xc; pgxy.x([vt1,vt2])], [yc; pgxy.y([vt1,vt2])]);
             
+            flag_plateau=0;
             if (in==1)||(on==1)
+                if pgxy.ics(vt1)~=pgxy.ics(vt2)                                         %20171031ÐÞ¸Ä
+                    zb1=CS(pgxy.ics(vt1)).zb(pgxy.ipOnCS(vt1));
+                    zb2=CS(pgxy.ics(vt2)).zb(pgxy.ipOnCS(vt2));
+                    zb_edge=min(zb1,zb2);
+                    flag_plateau=1;
+                end
                 %get the intersection of the polygon and the line connecting the mesh node and the centroid
                 mc=[];
                 vb=[];
@@ -178,7 +192,11 @@ trisurf(t,p(:,1),p(:,2),zb);
                 %mesh node
                 la=norm([p(i,1), p(i,2)]-refxy);
                 lb=norm([xc, yc]-[p(i,1), p(i,2)])-scale_r*norm([xc,yc]-refxy);
-                zzz=(lb*refz+la*zc)/(la+lb);
+                if flag_plateau==0
+                    zzz=(lb*refz+la*zc)/(la+lb);
+                else
+                    zzz=(lb*refz+la*zb_edge)/(la+lb);
+                end
                 break;
             end
         end
