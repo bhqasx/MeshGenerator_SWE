@@ -46,7 +46,7 @@ for kp=1:1:6
             pgxy.ipOnCS(kp)=1;
         elseif (pgxy.x(kp)-CS(kcs).xy(end,1)==0)&&(pgxy.y(kp)-CS(kcs).xy(end,2)==0)
             pgxy.ics(kp)=kcs;
-            pgxy.ipOnCS(kp)=CS(kcs).nodes;
+            pgxy.ipOnCS(kp)=CS(kcs).npt;
         end
     end
 end
@@ -63,7 +63,7 @@ for kp=1:1:6
     
     if pgxy.ics(ip1)~=pgxy.ics(ip2)
         kcs=kcs+1;
-        CS(kcs).nodes=2;
+        CS(kcs).npt=2;
         CS(kcs).xy=[CS(pgxy.ics(ip1)).xy(pgxy.ipOnCS(ip1),:); CS(pgxy.ics(ip2)).xy(pgxy.ipOnCS(ip2),:)];
         CS(kcs).zb=[CS(pgxy.ics(ip1)).zb(pgxy.ipOnCS(ip1)); CS(pgxy.ics(ip2)).zb(pgxy.ipOnCS(ip2))];
     end
