@@ -5,7 +5,7 @@ The files for creating a mesh is from `MESH2D` by Darren Engwirda [1]. MESH2D is
 
 The code for interplation of elevation information from measured cross-section profiles on a 2D mesh is written based on the algorithm propoesed by B.Schäppi [2].
 
-The code for topographic interplation in the confluence area of a river network is './confluent area topo'
+The code for topographic interplation in the confluence area of a river network is in './confluent area topo'
 
 [1] - Darren Engwirda, Locally-optimal Delaunay-refinement and optimisation-based mesh generation, Ph.D. Thesis, School of Mathematics and Statistics, The University of Sydney, September 2014.
 
