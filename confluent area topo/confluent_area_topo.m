@@ -1,6 +1,8 @@
 function [ p,t,zb,pgxy,x_shape,y_shape ] = confluent_area_topo( CS,  zc, scale_r, hmax )
 %make sure the three 3d lines in CS form a closed line.
 %zc is z coordinate at the centroid of the confluent area
+%you may need to use RiverGeoAnalysis.m in the repository of
+%"matlab-tools-for-calibration" to prepare the input data
 
 
 %----------------------------------------------------------
@@ -84,7 +86,11 @@ parentpath = cd(cd('..'));      %mesh2d is in the parent folder
 
 addpath(parentpath);
 
-hdata.hmax=hmax;
+if nargin==3
+    hdata.hmax=100;    %limit the cell size
+else
+    hdata.hmax=hmax;
+end
 [p,t] = mesh2d(nd,cnect,hdata);
 
 rmpath(parentpath);
