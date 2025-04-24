@@ -18,7 +18,7 @@ for kcs=1:1:3
     plot(CS(kcs).xy([1,end],1),CS(kcs).xy([1,end],2),'b-d');
     hold on;
 end
-button=questdlg('Connectiong 6 points in a clockwise or counter-clockwise direction to define the boundary, then press Return.');
+button=questdlg('Connectiong 6 points in a clockwise or counter-clockwise direction to define the boundary (hold Alt and left click), then press Enter.');
 if ~strcmp(button,'Yes')
     return;
 end
